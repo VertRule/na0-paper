@@ -12,6 +12,8 @@ latexmk -pdf na0-paper.tex
 
 Output: `na0-paper.pdf`
 
+PDF is included for convenience; source is authoritative; rebuild via latexmk.
+
 ## Figures
 
 All figures are pre-rendered PNGs in `figures/`. No additional scripts required to build the paper.
