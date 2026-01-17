@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "Cite this repository by release tag + commit SHA until arXiv ID exists."
-type: software
+type: article
 title: "Non-Atomic Zero: A Unified Theory of Projection-Honest Computation"
 version: 0.1.0-preprint
 date-released: 2026-01-16
