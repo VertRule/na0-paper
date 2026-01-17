@@ -1,0 +1,405 @@
+\section{The NA0 Algebra}
+\label{sec:na0-algebra}
+
+We formalize the $\NA$ framework as an algebraic structure that tracks
+projection debt alongside retained values.
+
+\begin{table}[t]
+\centering
+\caption{Summary of NA0 notation.}
+\label{tab:notation}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$\mathcal{X}$ & Ambient space of objects under projection \\
+$\mathcal{R}_\Pi$ & Remainder space for policy $\Pi$ \\
+$\Pi$ & Policy (projection rule / totalization scheme) \\
+$r_\Pi : \mathcal{X} \to \mathcal{R}_\Pi$ & Remainder extractor \\
+$\ell_\Pi : \mathcal{R}_\Pi \to \mathcal{X}$ & Lift (reconstruction map) \\
+$q_\Pi(X) = X - \ell_\Pi(r_\Pi(X))$ & Induced debt map \\
+$D$ & Debt component (lives in $\mathcal{X}$) \\
+$R$ & Remainder component (lives in $\mathcal{R}_\Pi$) \\
+$\NA\langle D, R; \Pi\rangle$ & NA0 object: debt, remainder, policy \\
+$P_\Pi(X)$ & NA0 projection operator \\
+$\mathrm{Rec}_\Pi$ & Reconstruction: $D + \ell_\Pi(R)$ \\
+$\mathrm{Total}$ & Totalization: extract $R$, discard $D$ \\
+$\mathrm{PTS}_R$ & Projection timing sensitivity (remainder channel) \\
+$\mathrm{DTR}$ & Debt-to-Remainder Ratio (admissibility criterion) \\
+$\mathrm{PTSBudget}$ & Relative PTS error (admissibility criterion) \\
+$\tau_{\mathrm{DTR}}, \tau_{\mathrm{PTS}}$ & Admissibility thresholds (default: 0.1, 0.05) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Basic Definitions}
+
+We begin with a minimal model that makes ``debt'' and ``remainder'' well-typed.
+This model is sufficient for the additive projection cases used throughout the paper;
+other domains can be treated as extensions by replacing $+$ with an explicit reconstruction operator.
+
+\begin{definition}[Policy, remainder extractor, and lift]
+  \label{def:policy_rl}
+  Fix an ambient space $\mathcal{X}$ (a vector space or abelian group) for objects $X$ under consideration.
+  A policy $\Pi$ specifies:
+  (i) a remainder space $\mathcal{R}_\Pi$ (also a vector space or abelian group),
+  (ii) a remainder extractor $r_\Pi:\mathcal{X}\to\mathcal{R}_\Pi$,
+  and (iii) a lift (reconstruction map) $\ell_\Pi:\mathcal{R}_\Pi\to\mathcal{X}$.
+  We require $\ell_\Pi$ to be a right-inverse on the image of $r_\Pi$:
+  \[
+    r_\Pi(\ell_\Pi(R)) = R \quad \forall R \in \mathrm{Im}(r_\Pi).
+  \]
+  In the minimal additive model used throughout this paper, we further require $r_\Pi$ and $\ell_\Pi$
+  to be linear (or additive homomorphisms). This ensures that the PTS identity
+  (\Cref{prop:pts-debt}) and related results hold.
+\end{definition}
+
+\begin{definition}[Debt map and NA0 object]
+  \label{def:na0_minimal}
+  Given $(r_\Pi,\ell_\Pi)$, define the lifted remainder in $\mathcal{X}$ as
+  \[
+    \tilde R_\Pi(X) \coloneqq \ell_\Pi(r_\Pi(X)).
+  \]
+  Define the induced debt map
+  \[
+    q_\Pi(X) \coloneqq X - \tilde R_\Pi(X),
+  \]
+  where subtraction is taken in $\mathcal{X}$ (thus this minimal model assumes $\mathcal{X}$ supports an additive structure).
+  An \emph{NA0 object} is
+  \[
+    \NA\langle D, R; \Pi \rangle,
+  \]
+  where $R=r_\Pi(X)\in\mathcal{R}_\Pi$ and $D=q_\Pi(X)\in\mathcal{X}$ for some $X\in\mathcal{X}$.
+\end{definition}
+
+\begin{definition}[Reconstruction and well-posedness]
+  \label{def:reconstruct}
+  Reconstruction under policy $\Pi$ is the map
+  \[
+    \mathrm{Rec}_\Pi(\NA\langle D,R;\Pi\rangle) \coloneqq D + \ell_\Pi(R).
+  \]
+  In the minimal additive model,
+  \[
+    \mathrm{Rec}_\Pi(\NA\langle q_\Pi(X), r_\Pi(X);\Pi\rangle)=X
+  \]
+  holds identically. We call $\Pi$ \emph{well-posed} for NA0 bookkeeping if $\ell_\Pi$ is specified and $q_\Pi(X)$ is defined for all $X$ of interest.
+\end{definition}
+
+\begin{definition}[Canonical debt representations]
+  \label{def:canonical_debt}
+  In practice, the debt component $D$ is not arbitrary. Common well-posed representations include:
+  \begin{itemize}
+    \item \textbf{Complement residual debt (additive):} $D=q_\Pi(X)\in\mathcal{X}$ induced by an explicit lift $\ell_\Pi$.
+    \item \textbf{Uncertainty debt:} $D$ as a distribution/covariance/interval object plus the assumptions required to interpret it (model class, regularization, priors).
+    \item \textbf{Sufficient-statistics debt:} $D$ as the minimal metadata and statistics required to recompute or re-totalize under alternate policies (e.g., fit diagnostics, hyperparameters, and restricted residuals).
+  \end{itemize}
+  All debt representations used in this paper are required to be deterministically serializable and comparable under a declared metric.
+\end{definition}
+
+\begin{remark}[Well-posedness criteria for debt]
+  \label{rem:wellposed}
+  To distinguish NA0 from informal ``residual logging,'' debt must satisfy:
+  \begin{enumerate}
+    \item \textbf{Typed}: $D$ lives in a declared space with defined operations.
+    \item \textbf{Comparable}: A metric or norm is specified for measuring debt magnitude.
+    \item \textbf{Serializable}: $D$ admits a canonical, deterministic encoding.
+    \item \textbf{Policy-addressable}: $D$ includes sufficient metadata to re-totalize under alternate policies or to trigger fail-closed behavior.
+  \end{enumerate}
+  These criteria ensure that debt is a first-class computational object, not merely a comment or annotation.
+\end{remark}
+
+\begin{definition}[Totalization]
+  \label{def:totalization}
+  \emph{Totalization} is the operation that extracts only the remainder,
+  discarding the debt:
+  \begin{equation}
+    \mathrm{Total}(\NA\langle D, R; \Pi \rangle) = R
+  \end{equation}
+  Totalization converts an $\NA$ object back to a scalar (or low-dimensional
+  object), losing the debt information.
+\end{definition}
+
+Standard computational practice implicitly totalizes at every projection step.
+$\NA$ defers totalization, preserving debt for downstream analysis.
+
+\subsection{Composition in the minimal additive model}
+
+Composition is induced by the policy maps $(r_\Pi,\ell_\Pi)$ and may fail to exist if types do not align.
+
+\begin{definition}[Sequential policy application]
+  \label{def:policy_apply}
+  For a policy $\Pi$ with maps $(r_\Pi,\ell_\Pi)$, define the NA0 projection operator
+  \[
+    P_\Pi(X)\coloneqq \NA\langle q_\Pi(X), r_\Pi(X); \Pi\rangle.
+  \]
+  Given two policies $\Pi_1,\Pi_2$ defined over a shared ambient space $\mathcal{X}$,
+  the sequential policy $\Pi_{2\circ 1}$ is defined whenever $r_{\Pi_2}$ is valid on $\mathcal{X}$.
+  In that case, we define
+  \[
+    P_{\Pi_{2\circ 1}}(X)\coloneqq \NA\langle q_{\Pi_2}(X), r_{\Pi_2}(X); \Pi_2\rangle,
+  \]
+  and note that NA0 bookkeeping is threaded by explicitly retaining the earlier debt objects rather than discarding them.
+\end{definition}
+
+\begin{remark}
+  This definition replaces informal ``$\oplus$''/``$\otimes$'' composition. In the additive model, composition is not arbitrary:
+  it is determined by declared extract/lift pairs and their shared ambient space. Later sections treat non-additive cases as extensions by declaring a reconstruction operator in place of $+$.
+\end{remark}
+
+\begin{example}[Worked composition: baseline then threshold]
+  \label{ex:composition}
+  Consider a signal $X \in \mathbb{R}^n$ processed by two sequential projections:
+  \begin{enumerate}
+    \item \textbf{Baseline subtraction} $\Pi_1$: Fit a polynomial $p(x)$ to edge regions, subtract it.
+      \begin{itemize}
+        \item $r_{\Pi_1}(X) = X - p$ (baseline-subtracted signal)
+        \item $\ell_{\Pi_1}(R) = R$ (identity lift into $\mathbb{R}^n$)
+        \item $q_{\Pi_1}(X) = p$ (the fitted baseline is debt)
+      \end{itemize}
+    \item \textbf{Thresholding} $\Pi_2$: Zero values below threshold $\tau$.
+      \begin{itemize}
+        \item $r_{\Pi_2}(Y) = Y \cdot \mathbf{1}_{Y > \tau}$ (thresholded signal)
+        \item $\ell_{\Pi_2}(R) = R$ (identity lift)
+        \item $q_{\Pi_2}(Y) = Y \cdot \mathbf{1}_{Y \leq \tau}$ (sub-threshold values are debt)
+      \end{itemize}
+  \end{enumerate}
+
+  Applying $\Pi_1$ then $\Pi_2$ to $X$:
+  \[
+    P_{\Pi_2}(P_{\Pi_1}(X)) = \NA\Big\langle q_{\Pi_2}(X-p),\; r_{\Pi_2}(X-p);\; \Pi_2 \Big\rangle
+  \]
+  with accumulated debt $(p, q_{\Pi_2}(X-p))$---the baseline \emph{and} the sub-threshold residuals.
+
+  NA0 bookkeeping threads both debt components. Standard practice discards $p$ after step 1, losing the ability to diagnose whether apparent ``signal'' came from baseline model choice or thresholding.
+
+  \textbf{Fail-closed condition}: If $\|p\| > \theta_1$ (baseline too large) or $\|q_{\Pi_2}\| > \theta_2$ (too much thresholded), refuse to totalize.
+\end{example}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=12mm,
+  box/.style={draw, rounded corners, inner sep=6pt, align=center},
+  arr/.style={-Latex}
+]
+\node[box] (x0) {$X$};
+\node[box, right=of x0] (p1) {$P_{\Pi_1}$\\(projection)};
+\node[box, right=of p1] (u1) {$U$\\(update)};
+\node[box, right=of u1] (p2) {$P_{\Pi_2}$\\(projection)};
+\node[box, right=of p2] (u2) {$U$};
+\draw[arr] (x0) -- (p1);
+\draw[arr] (p1) -- node[above]{standard: drop $D$} (u1);
+\draw[arr] (u1) -- (p2);
+\draw[arr] (p2) -- node[above]{NA0: thread $D$} (u2);
+\node[below=8mm of u1, align=center] (pts) {PTS probe compares\\$r_\Pi(U(X))$ vs $r_\Pi(U(\ell_\Pi(r_\Pi(X))))$};
+\draw[arr] (u1) -- (pts);
+\end{tikzpicture}
+\caption{Projection-honest computation threads debt objects across repeated projections. PTS provides an operational diagnostic for projection timing sensitivity.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Projection Timing Sensitivity}
+
+A key diagnostic for projection effects is non-commutativity with other
+operations.
+
+\begin{definition}[Projection Timing Sensitivity (typed remainder form)]
+  \label{def:pts_typed}
+  Let $\Pi$ be a policy with $(r_\Pi,\ell_\Pi)$ and let $U:\mathcal{X}\to\mathcal{X}$ be an update/evolution operator.
+  Define the remainder-channel PTS:
+  \[
+    \mathrm{PTS}_R(\Pi,U,X) \coloneqq r_\Pi(U(X)) - r_\Pi\!\big(U(\ell_\Pi(r_\Pi(X)))\big),
+  \]
+  which compares evolve-then-extract vs extract-then-lift-then-evolve-then-extract.
+  We say PTS is present when $\mathrm{PTS}_R(\Pi,U,X)\neq 0$ under a declared metric on $\mathcal{R}_\Pi$.
+\end{definition}
+
+\begin{proposition}[Debt form of PTS under additive reconstruction]
+  \label{prop:pts-debt}
+  Assume the policy $\Pi$ admits additive reconstruction in $\mathcal{X}$
+  (so $X = q_\Pi(X) + \ell_\Pi(r_\Pi(X))$), and assume $U$ is linear over $+$.
+  Then the remainder PTS satisfies:
+  \begin{equation}
+    \mathrm{PTS}_R(\Pi, U, X) = r_\Pi(U(q_\Pi(X))),
+  \end{equation}
+  i.e., PTS measures how the evolved debt projects back onto the remainder channel.
+\end{proposition}
+
+\begin{proof}
+  Write $R = r_\Pi(X)$ and $D = q_\Pi(X) = X - \ell_\Pi(R)$.
+  Then $U(X) = U(D) + U(\ell_\Pi(R))$ by linearity.
+  We have:
+  \begin{align}
+    \mathrm{PTS}_R(\Pi,U,X)
+      &= r_\Pi(U(X)) - r_\Pi(U(\ell_\Pi(R))) \\
+      &= r_\Pi(U(D) + U(\ell_\Pi(R))) - r_\Pi(U(\ell_\Pi(R))) \\
+      &= r_\Pi(U(D)),
+  \end{align}
+  where the last step uses linearity of $r_\Pi$ (which follows from the additive model).
+\end{proof}
+
+This shows that PTS measures how debt transforms under evolution and projects back.
+
+\subsection{Projection Non-Transparency}
+
+The following theorem establishes that non-zero PTS implies provable information loss
+from naive projection---loss that cannot be recovered without access to the debt.
+
+\begin{theorem}[Projection Non-Transparency]
+  \label{thm:non-transparency}
+  Let $\Pi$ be a well-posed policy with $(r_\Pi, \ell_\Pi, q_\Pi)$ satisfying
+  additive reconstruction in a normed space $(\mathcal{X}, \|\cdot\|)$.
+  Let $U: \mathcal{X} \to \mathcal{X}$ be linear, and let $\|\cdot\|_R$ be
+  a norm on $\mathcal{R}_\Pi$. Then:
+  \begin{enumerate}
+    \item[(a)] \textbf{Error identity.} The remainder-channel error from naive projection is exactly:
+      \[
+        E_{\mathrm{naive}}(U, X) \coloneqq \|r_\Pi(U(X)) - r_\Pi(U(\ell_\Pi(r_\Pi(X))))\|_R = \|\mathrm{PTS}_R(\Pi, U, X)\|_R.
+      \]
+
+    \item[(b)] \textbf{Debt-driven identity.} Under additive reconstruction and linear $U$:
+      \[
+        E_{\mathrm{naive}}(U, X) = \|r_\Pi(U(q_\Pi(X)))\|_R.
+      \]
+      That is, the error equals the norm of the evolved debt's projection onto the remainder channel.
+
+    \item[(c)] \textbf{Non-eliminability.} If $r_\Pi(U(q_\Pi(X))) \neq 0$, then no function
+      $f: \mathcal{R}_\Pi \to \mathcal{R}_\Pi$ applied to the naive remainder
+      $r_\Pi(U(\ell_\Pi(r_\Pi(X))))$ can recover the true remainder $r_\Pi(U(X))$
+      without access to the debt $q_\Pi(X)$ or additional information about $X$.
+  \end{enumerate}
+\end{theorem}
+
+\begin{proof}
+  Part (a) is immediate from the definition of $\mathrm{PTS}_R$.
+
+  Part (b) follows from \Cref{prop:pts-debt}: under the stated assumptions,
+  $\mathrm{PTS}_R(\Pi, U, X) = r_\Pi(U(q_\Pi(X)))$.
+
+  For part (c), suppose $f$ recovers the true remainder from the naive remainder alone:
+  $f(r_\Pi(U(\ell_\Pi(R)))) = r_\Pi(U(X))$ for $R = r_\Pi(X)$.
+  By additive reconstruction, $r_\Pi(U(X)) = r_\Pi(U(\ell_\Pi(R))) + r_\Pi(U(q_\Pi(X)))$.
+  Thus $f$ would need to produce $r_\Pi(U(q_\Pi(X)))$ from $r_\Pi(U(\ell_\Pi(R)))$ alone.
+  But $q_\Pi(X) = X - \ell_\Pi(R)$ depends on $X$ beyond $R$; for fixed $R$,
+  different $X$ (with the same remainder but different debt) yield different
+  $r_\Pi(U(q_\Pi(X)))$. Hence no such $f$ exists in general.
+\end{proof}
+
+\begin{corollary}[Naive Projection is Provably Lossy]
+  \label{cor:provably-lossy}
+  If there exist $U$ and $X$ such that $r_\Pi(U(q_\Pi(X))) \neq 0$, then discarding
+  debt before applying $U$ incurs an error that cannot be eliminated by any
+  post-hoc correction on the remainder channel alone.
+\end{corollary}
+
+This theorem provides the formal foundation for projection-honest computation:
+\emph{dropping debt is not merely sloppy bookkeeping---it is provably lossy
+whenever the evolution couples debt back into the remainder channel.}
+
+\begin{remark}[Scope of linearity assumptions]
+  \label{rem:linearity-scope}
+  \Cref{thm:non-transparency} assumes additive reconstruction and linear $U$.
+  For nonlinear $U$ or non-additive reconstruction (e.g., multiplicative or
+  information-theoretic policies), the theorem applies locally via linearization,
+  or globally by replacing additive composition with a declared reconstruction
+  operator. We treat such extensions as future work; the linear case already
+  covers the signal, spectral, and quantum examples in this paper.
+\end{remark}
+
+\subsection{Debt Attachment Notation}
+
+For compact notation, we write:
+\begin{equation}
+  \remainder^{\langle\debt;\policy\rangle}
+\end{equation}
+to indicate that remainder $\remainder$ carries attached debt $\debt$ under
+policy $\policy$. This is equivalent to $\NA\langle\debt, \remainder; \policy\rangle$
+but emphasizes that the ``answer'' $\remainder$ is not standalone.
+
+\subsection{Fail-Closed Projection}
+
+\begin{definition}[Fail-Closed Policy]
+  \label{def:fail-closed}
+  A policy $\policy$ is \emph{fail-closed} if it refuses to totalize when
+  debt exceeds a threshold:
+  \begin{equation}
+    \mathrm{Total}_\policy(\NA\langle\debt, \remainder; \policy\rangle) =
+    \begin{cases}
+      \remainder & \text{if } \|\debt\| < \theta \\
+      \bot & \text{otherwise}
+    \end{cases}
+  \end{equation}
+  where $\theta$ is the policy's debt tolerance and $\bot$ indicates refusal.
+\end{definition}
+
+Fail-closed policies prevent silent propagation of high-debt values. Instead
+of returning a potentially misleading scalar, they signal that the projection
+is unreliable under current conditions.
+
+\subsection{Admissibility Criteria}
+
+We define two portable, computable criteria for deciding when totalization is safe.
+
+\begin{definition}[Debt-to-Remainder Ratio (DTR)]
+  \label{def:dtr}
+  For an NA0 object $\NA\langle D, R; \Pi\rangle$ with norms $\|\cdot\|$ on $\mathcal{X}$
+  and $\|\cdot\|_R$ on $\mathcal{R}_\Pi$, define:
+  \[
+    \mathrm{DTR}(\NA\langle D, R; \Pi\rangle) \coloneqq \frac{\|D\|}{\|\ell_\Pi(R)\| + \epsilon}
+  \]
+  where $\epsilon > 0$ is a small constant preventing division by zero.
+  The \emph{DTR threshold} $\tau_{\mathrm{DTR}}$ determines admissibility:
+  totalization is permitted iff $\mathrm{DTR} < \tau_{\mathrm{DTR}}$.
+\end{definition}
+
+\begin{definition}[PTS Budget]
+  \label{def:pts-budget}
+  For a policy $\Pi$, update $U$, and input $X$, define the \emph{PTS budget} as:
+  \[
+    \mathrm{PTSBudget}(\Pi, U, X) \coloneqq \frac{\|\mathrm{PTS}_R(\Pi, U, X)\|_R}{\|r_\Pi(X)\|_R + \epsilon}.
+  \]
+  This measures the relative error introduced by naive projection under evolution $U$.
+  The \emph{PTS budget threshold} $\tau_{\mathrm{PTS}}$ determines admissibility:
+  totalization before $U$ is permitted iff $\mathrm{PTSBudget} < \tau_{\mathrm{PTS}}$.
+\end{definition}
+
+\begin{remark}[Default thresholds and regularization]
+  We recommend $\tau_{\mathrm{DTR}} = 0.1$ and $\tau_{\mathrm{PTS}} = 0.05$ as
+  conservative defaults. These should be calibrated per domain: stricter for
+  high-stakes applications (e.g., $\tau = 0.01$), looser for exploratory work.
+  The key property is that thresholds are \emph{declared}, not implicit.
+
+  For the regularization constant $\epsilon$, we recommend $\epsilon = 10^{-8} \cdot \|X\|$
+  (machine epsilon scaled by input norm) or a fixed $\epsilon = 10^{-10}$ for
+  normalized inputs. Implementations must declare the chosen $\epsilon$ to ensure
+  reproducibility.
+\end{remark}
+
+These criteria make fail-closed policies operational: rather than relying on
+subjective judgment, pipelines can enforce admissibility automatically.
+
+\subsection{Properties}
+
+\begin{proposition}[Debt Conservation]
+  \label{prop:debt-conservation}
+  Under faithful $\NA$ bookkeeping, total information is conserved:
+  \begin{equation}
+    X = \mathrm{Rec}_\policy(\NA\langle\debt, \remainder; \policy\rangle)
+  \end{equation}
+  where $\mathrm{Rec}_\policy$ combines debt and remainder according to policy (\Cref{def:reconstruct}).
+\end{proposition}
+
+\begin{proposition}[Policy Dependence]
+  \label{prop:policy-dependence}
+  Different policies applied to the same input $X$ generally yield different
+  debt-remainder decompositions:
+  \begin{equation}
+    \proj_{\policy_1}(X) = \NA\langle\debt_1, \remainder_1; \policy_1\rangle
+    \neq \NA\langle\debt_2, \remainder_2; \policy_2\rangle = \proj_{\policy_2}(X)
+  \end{equation}
+  even when $\remainder_1 = \remainder_2$.
+\end{proposition}
+
+This captures the key insight: two pipelines may agree on the remainder while
+carrying different debts, leading to different behaviors under composition
+or evolution.

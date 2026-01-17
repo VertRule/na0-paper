@@ -1,0 +1,174 @@
+\section{Signal Processing: Baseline Subtraction}
+\label{sec:signal}
+
+We demonstrate $\NA$ principles through synthetic experiments on baseline
+subtraction, a ubiquitous projection operation in signal processing.
+
+\subsection{The Baseline Subtraction Problem}
+
+In many applications---spectroscopy, astronomy, medical imaging---the observed
+signal $Y(x)$ is a mixture of:
+\begin{equation}
+  Y(x) = B + F(x) + I(x) + N(x)
+\end{equation}
+where:
+\begin{itemize}
+  \item $B$ is the background/baseline to be estimated
+  \item $F(x)$ is the foreground signal of interest
+  \item $I(x)$ is instrumental drift
+  \item $N(x)$ is measurement noise
+\end{itemize}
+
+The goal is to recover $B$ (or $F$) from $Y$. The standard approach:
+\begin{enumerate}
+  \item Identify ``source-free'' regions where $F(x) \approx 0$
+  \item Fit a baseline model to these regions
+  \item Extrapolate/interpolate to the full domain
+  \item Subtract the fitted baseline to recover $F$; estimate $B$ from residuals
+\end{enumerate}
+
+This is a projection: the fitted baseline model discards information about
+unmodeled components.
+
+\subsection{Projection Policy Variations}
+
+Different baseline model classes constitute different projection policies:
+\begin{itemize}
+  \item \textbf{Linear (degree 1)}: Assumes linear drift
+  \item \textbf{Quadratic (degree 2)}: Captures curvature
+  \item \textbf{Cubic (degree 3)}: More flexible extrapolation
+  \item \textbf{High-order (degree 6+)}: Can fit complex shapes
+\end{itemize}
+
+Each policy makes different assumptions about what belongs in the baseline
+versus the signal. Higher-degree polynomials can fit more of the low-frequency
+foreground component, shifting the boundary between debt and remainder.
+
+\subsection{Experimental Setup}
+
+We generate synthetic data with known ground truth:
+\begin{itemize}
+  \item Background $B = 1.0$ (constant)
+  \item Foreground $F(x)$: Gaussian envelope + substructure, concentrated in center
+  \item Instrument $I(x)$: Low-order polynomial drift
+  \item Noise $N(x)$: Gaussian, $\sigma = 0.05$
+\end{itemize}
+
+The foreground has faint low-frequency tails extending to the ``source-free''
+edge regions. This is the mechanism that creates policy-dependent bias:
+different polynomial degrees absorb different amounts of this tail.
+
+\subsection{Results}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/signal/single_realization.png}
+  \caption{Single realization of the baseline subtraction experiment.
+    \textbf{Top left}: Signal decomposition showing observed $Y(x)$, foreground
+    $F(x)$, and true baseline $B+I(x)$. Edge regions (green shading) are used
+    for baseline fitting.
+    \textbf{Top right}: Fitted baselines from different policies versus true baseline.
+    \textbf{Bottom left}: Residuals after baseline subtraction, with estimated
+    $\hat{B}$ values.
+    \textbf{Bottom right}: Numerical comparison of policy performance.}
+  \label{fig:single-realization}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/signal/experiment_results.png}
+  \caption{Monte Carlo results over 1000 trials.
+    \textbf{Top left}: Bias and variance by policy.
+    \textbf{Top right}: Estimation error versus foreground amplitude.
+    \textbf{Bottom left}: Distribution of background estimates.
+    \textbf{Bottom right}: Inter-policy disagreement.}
+  \label{fig:monte-carlo}
+\end{figure}
+
+\Cref{fig:single-realization} shows a single realization. Key observations:
+\begin{itemize}
+  \item The linear fit (degree 1) underestimates the true baseline in the center,
+    leading to overestimated $\hat{B}$
+  \item The high-order fit (degree 6) absorbs some foreground at the edges,
+    leading to underestimated $\hat{B}$
+  \item Intermediate policies produce intermediate results
+\end{itemize}
+
+\Cref{fig:monte-carlo} shows Monte Carlo results over 1000 trials:
+\begin{itemize}
+  \item \textbf{Bias varies by policy}: $\sim 10\%$ variation in mean $\hat{B}$
+  \item \textbf{Variance varies by policy}: Higher-degree polynomials have more
+    extrapolation variance
+  \item \textbf{Inter-policy disagreement exceeds noise}: Policies disagree by
+    many $\sigma$ even with low measurement noise
+\end{itemize}
+
+\subsection{Debt-Remainder Correlation}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/signal/debt_remainder_correlation.png}
+  \caption{Debt-remainder correlation. Changes in policy-dependent debt
+    (polynomial degree) correlate with changes in remainder ($\hat{B}$).
+    The correlation demonstrates that projection policy is a systematic
+    effect, not random noise.}
+  \label{fig:debt-correlation}
+\end{figure}
+
+\Cref{fig:debt-correlation} demonstrates the key $\NA$ prediction: policy
+changes induce correlated debt-remainder variations. Specifically:
+\begin{itemize}
+  \item Increasing polynomial degree increases the model's flexibility
+    (changes debt structure)
+  \item This systematically shifts $\hat{B}$ (changes remainder)
+  \item The relationship is monotonic and predictable
+\end{itemize}
+
+This correlation is the signature of projection-induced effects. If
+disagreement were due to noise or physics, we would not expect systematic
+policy dependence.
+
+\subsection{NA0 Representation}
+
+Each baseline subtraction produces:
+\begin{equation}
+  \proj_{\text{deg-}d}\left(Y(x)\right) =
+  \NA\left\langle \text{unmodeled components}, \hat{B}; \text{poly-}d\right\rangle
+\end{equation}
+
+The debt includes:
+\begin{itemize}
+  \item The polynomial coefficients (chosen, not observed)
+  \item The edge-region definition (where the fit was performed)
+  \item The extrapolation uncertainty to the signal region
+\end{itemize}
+
+\paragraph{Additional policy axes and structured debt.}
+Beyond polynomial degree, the same experiment family exhibits sensitivity to
+(i) regularization strength (e.g., Tikhonov $\lambda$) and (ii) mask definition
+(edge fraction used for baseline fitting). In extended runs, debt is naturally
+multi-component (e.g., edge leakage, extrapolation energy, edge residual power),
+supporting the NA0 position that $D$ is not merely a scalar residual but a
+typed object carrying enough metadata to support re-totalization under alternate
+policies or to trigger fail-closed behavior.
+
+\subsection{Implications}
+
+The experiment demonstrates:
+\begin{enumerate}
+  \item \textbf{Apparent tensions can be manufactured}: Two groups using
+    different baseline policies will report different $\hat{B}$, even with
+    identical data and noise levels.
+
+  \item \textbf{Disagreement is not resolved by more data}: The bias is
+    systematic, not statistical. More observations reduce variance but not
+    policy-dependent bias.
+
+  \item \textbf{Explicit debt enables diagnosis}: Recording the projection
+    policy alongside the result allows detection of policy-induced disagreements.
+\end{enumerate}
+
+In real applications, similar projection policy choices arise whenever
+competing pipelines remove background, instrument response, or selection
+effects using different admissible rules. The $\NA$ framework provides a
+vocabulary for discussing such effects.

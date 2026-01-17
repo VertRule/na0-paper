@@ -1,0 +1,86 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{physics}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[margin=1in]{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{matrix,positioning,arrows.meta}
+
+% Theorem environments
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+% NA0 notation
+\newcommand{\NA}{\mathrm{NA0}}
+\newcommand{\debt}{\mathcal{D}}
+\newcommand{\remainder}{\mathcal{R}}
+\newcommand{\policy}{\Pi}
+\newcommand{\proj}{\mathcal{P}}
+
+% Title
+\title{Non-Atomic Zero: A Unified Theory of Projection-Honest Computation}
+
+\author{
+  David Ingle\thanks{Preprint draft. Comments welcome at \texttt{Dave@vertrule.com}.}\\
+  VertRule Inc.
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce \emph{Non-Atomic Zero} ($\NA$), a mathematical framework that makes
+explicit the information discarded by projection and totalization operations.
+Standard computational practice treats projection as atomic---collapsing
+high-dimensional objects to scalars while silently discarding context. $\NA$
+instead represents such operations as structured objects $\NA\langle \debt,
+\remainder; \policy \rangle$ carrying: (1) the discarded information (\emph{debt}
+$\debt$), (2) the retained value (\emph{remainder} $\remainder$), and (3) the
+projection rule (\emph{policy} $\policy$). We demonstrate the framework across
+multiple domains: divergent series regularization (where $\NA$ clarifies the sense
+in which $1+2+3+\cdots = -1/12$), signal processing (where baseline subtraction
+policies induce correlated debt-remainder variations), spectral analysis
+(where exporting projectors avoids eigenvector instabilities), and reduced
+quantum dynamics (where memory effects arise as correction terms for naive
+projection). Our experiments show that policy changes produce predictable,
+measurable shifts in both debt and remainder, enabling detection of
+projection-induced artifacts. We propose $\NA$ as a foundation for
+\emph{projection-honest} computation, where all totalization debt is explicitly
+tracked and auditable.
+\end{abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-na0-algebra}
+\input{sections/03-divergence}
+\input{sections/04-signal}
+\input{sections/05-spectral}
+\input{sections/06-quantum}
+\input{sections/07-discussion}
+
+\appendix
+\input{sections/08-appendix}
+
+\bibliographystyle{plain}
+\bibliography{na0-paper}
+
+\end{document}

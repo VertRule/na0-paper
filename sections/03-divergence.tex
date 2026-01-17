@@ -1,0 +1,162 @@
+\section{Divergence and Regularization}
+\label{sec:divergence}
+
+The $\NA$ framework provides a natural language for divergent series
+regularization, clarifying statements like ``$1 + 2 + 3 + \cdots = -1/12$''.
+
+\subsection{The Problem of Divergent Sums}
+
+The series $\sum_{n=1}^\infty n = 1 + 2 + 3 + \cdots$ diverges. Yet in
+physics---particularly string theory, Casimir effect calculations, and
+zeta-function regularization---this series is assigned the value $-1/12$.
+This is not a claim about convergence but about \emph{regularization}:
+extracting a finite part from a divergent object.
+
+\subsection{Regulated Families and NA0}
+\label{sec:div_regulated}
+
+To keep debt as a mathematically well-typed object, we represent divergent expressions via a regulated family $S(\epsilon)$ and a declared scheme/policy $\Pi$.
+The remainder is the scheme-defined finite part, and the debt is the discarded divergent asymptotic data together with the regulator identity.
+
+\paragraph{Example: exponential regulator.}
+Consider the regulated series
+\[
+  S(\epsilon) \coloneqq \sum_{n=1}^\infty n e^{-\epsilon n}, \quad \epsilon>0.
+\]
+This admits a closed form $S(\epsilon)=\frac{e^{-\epsilon}}{(1-e^{-\epsilon})^2}$ and has the asymptotic expansion as $\epsilon\to 0^+$:
+\[
+  S(\epsilon) = \frac{1}{\epsilon^2} - \frac{1}{12} + O(\epsilon^2).
+\]
+Under a ``finite-part'' policy $\Pi_{\mathrm{FP}}$ that retains the constant term and records the divergent terms as debt, we define:
+\[
+  P_{\Pi_{\mathrm{FP}}}(S) \;=\;
+  \NA\Big\langle D(\epsilon),\; R;\; \Pi_{\mathrm{FP}}\Big\rangle,
+\]
+where the remainder is the finite part $R=-\frac{1}{12}$ and the debt is the discarded divergent asymptotic series plus regulator metadata, e.g.
+\[
+  D(\epsilon) = \left(\frac{1}{\epsilon^2} + O(\epsilon^2),\; \text{regulator}=\text{exp},\; \text{retained term}=\epsilon^0\right).
+\]
+This makes explicit what is usually implicit: the value $-\frac{1}{12}$ is a policy-dependent remainder extracted from a regulated family, and the divergent structure is retained as a first-class object rather than silently discarded.
+
+\subsection{Zeta-Function Regularization}
+
+The Riemann zeta function provides a canonical regularization via analytic continuation.
+For $\Re(s) > 1$:
+\begin{equation}
+  \zeta(s) = \sum_{n=1}^\infty \frac{1}{n^s}
+\end{equation}
+extended to the entire complex plane (except $s=1$) by analytic continuation.
+At $s = -1$, $\zeta(-1) = -\frac{1}{12}$.
+
+In NA0 terms, zeta-regularization is a policy $\Pi_\zeta$ where:
+\begin{itemize}
+  \item The ambient space $\mathcal{X}$ is regulated families (formal power series in a regulator parameter)
+  \item The remainder extractor $r_{\Pi_\zeta}$ returns the analytically-continued value
+  \item The debt includes the divergent asymptotic terms and the choice of analytic continuation path
+\end{itemize}
+
+\subsection{Alternative Regularizations}
+
+Different policies yield different remainders:
+
+\paragraph{Ramanujan Summation.} Ramanujan's method assigns
+$\sum_{n=1}^\infty n = -1/12$ via a specific definition involving the
+Euler-Maclaurin formula. The debt structure differs from zeta-regularization
+even though the remainder is the same.
+
+\paragraph{Cutoff Regularization.} Introducing a cutoff $N$ and taking
+$N \to \infty$:
+\begin{equation}
+  \sum_{n=1}^N n = \frac{N(N+1)}{2} \sim \frac{N^2}{2} + \frac{N}{2}
+\end{equation}
+This diverges; extracting a finite part requires subtracting the divergent
+terms, which involves arbitrary choices. Different subtraction schemes give
+different remainders.
+
+\paragraph{Dimensional Regularization.} In $d$ dimensions, certain sums become
+convergent and can be analytically continued. The remainder depends on the
+dimension.
+
+\subsection{Debt-Remainder Correlation}
+
+A key $\NA$ prediction: changing the regularization policy should produce
+correlated changes in debt and remainder. If a policy change shifts the
+remainder by $\Delta\remainder$, it must shift the debt by $-\Delta\remainder$
+(for additive projections) to conserve information.
+
+This can be tested: vary the regularization policy (e.g., cutoff scale,
+analytic continuation path) and measure how debt and remainder co-vary.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/divergence/regulator_validation.png}
+  \caption{Numerical validation of debt-remainder separation in zeta-regularization.
+    \textbf{Left}: Regulated sum $S(\varepsilon)$ and divergent term $1/\varepsilon^2$.
+    \textbf{Center}: Residual after subtracting the divergent term; the extracted constant
+    converges to $-1/12$ with relative error $< 0.001\%$.
+    \textbf{Right}: Debt magnitude (divergent term) vs remainder (finite part), showing
+    the stable remainder despite varying debt. Script: \texttt{divergence\_validation.py}.}
+  \label{fig:regulator-validation}
+\end{figure}
+
+\Cref{fig:regulator-validation} provides numerical validation: we compute
+$S(\varepsilon) = \sum_{n=1}^\infty n e^{-\varepsilon n}$ for decreasing $\varepsilon$,
+subtract the divergent $1/\varepsilon^2$ term, and extract the constant.
+The extracted remainder converges to $-1/12$ with relative error $< 0.001\%$,
+demonstrating that the debt-remainder decomposition is numerically stable
+and policy-dependent (the constant changes if we change which asymptotic terms
+are retained as debt).
+
+\subsection{Famous Formulas}
+
+Several ``famous'' regularized values can be stated precisely in $\NA$ form:
+
+\begin{align}
+  \proj_\zeta(1 + 1 + 1 + \cdots) &= \NA\langle \cdot, -\tfrac{1}{2}; \zeta \rangle \\
+  \proj_\zeta(1 + 2 + 3 + \cdots) &= \NA\langle \cdot, -\tfrac{1}{12}; \zeta \rangle \\
+  \proj_\zeta(1 + 4 + 9 + \cdots) &= \NA\langle \cdot, 0; \zeta \rangle \\
+  \proj_\zeta(1^3 + 2^3 + 3^3 + \cdots) &= \NA\langle \cdot, \tfrac{1}{120}; \zeta \rangle
+\end{align}
+
+where $\langle \cdot, \ldots \rangle$ indicates that the debt is ``everything
+else'' required to make the decomposition exact.
+
+\subsection{Physical Applications}
+
+In physics, regularized sums appear in:
+
+\paragraph{Casimir Effect.} The vacuum energy between conducting plates involves
+$\sum_{n=1}^\infty n$, regularized to give a finite, measurable force.
+
+\paragraph{String Theory.} The critical dimension $d=26$ for bosonic strings
+emerges from requiring $\zeta(-1) = -1/12$ in a consistency calculation.
+
+\paragraph{Quantum Field Theory.} Divergent loop integrals are regularized via
+dimensional regularization, yielding finite remainders that match experiment.
+
+In each case, the physics is encoded not in the bare divergent sum but in the
+\emph{policy-dependent remainder}. The $\NA$ framework makes this dependence
+explicit, rather than treating regularization as a ``trick'' that magically
+produces answers.
+
+\subsection{The Hadamard Finite Part}
+
+For divergent integrals, the Hadamard finite part provides a canonical
+regularization. For $\int_0^1 x^{-\alpha} dx$ with $\alpha > 1$:
+\begin{equation}
+  \mathrm{Pf}\int_0^1 x^{-\alpha}\, dx = \frac{1}{1-\alpha}
+\end{equation}
+interpreted as the analytic continuation from $\alpha < 1$.
+
+In $\NA$ terms, regularizing by cutoff $\epsilon$:
+\[
+  \int_\epsilon^1 x^{-\alpha}\, dx = \frac{1 - \epsilon^{1-\alpha}}{1-\alpha}
+  = \underbrace{\frac{1}{1-\alpha}}_{\text{finite part}}
+  + \underbrace{\left(-\frac{\epsilon^{1-\alpha}}{1-\alpha}\right)}_{\text{divergent as }\epsilon\to 0}.
+\]
+Thus:
+\begin{equation}
+  \proj_{\mathrm{Hadamard}}\left(\int_0^1 x^{-\alpha}\, dx\right) =
+  \NA\left\langle -\frac{\epsilon^{1-\alpha}}{1-\alpha},\; \frac{1}{1-\alpha};\; \mathrm{Hadamard}\right\rangle
+\end{equation}
+where the debt is the divergent asymptotic term (plus regulator metadata: cutoff at $\epsilon$).

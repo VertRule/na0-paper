@@ -1,0 +1,224 @@
+\section{Proof Details}
+\label{sec:appendix-proofs}
+
+\subsection{Proof of Proposition~\ref{prop:pts-debt}}
+
+We show that the remainder-channel PTS reduces to the evolved debt's projection
+onto the remainder channel, using the typed formulation from \Cref{def:pts_typed}.
+
+\begin{proof}
+Let $\Pi$ be a policy with remainder extractor $r_\Pi: \mathcal{X} \to \mathcal{R}_\Pi$,
+lift $\ell_\Pi: \mathcal{R}_\Pi \to \mathcal{X}$, and induced debt map
+$q_\Pi(X) = X - \ell_\Pi(r_\Pi(X))$.
+
+Assume additive reconstruction: $X = q_\Pi(X) + \ell_\Pi(r_\Pi(X))$.
+Assume $U: \mathcal{X} \to \mathcal{X}$ is linear.
+
+Write $R = r_\Pi(X) \in \mathcal{R}_\Pi$ and $D = q_\Pi(X) \in \mathcal{X}$.
+By additive reconstruction: $X = D + \ell_\Pi(R)$.
+
+Applying linearity of $U$:
+\begin{equation}
+  U(X) = U(D + \ell_\Pi(R)) = U(D) + U(\ell_\Pi(R)).
+\end{equation}
+
+The remainder-channel PTS (\Cref{def:pts_typed}) is:
+\begin{align}
+  \mathrm{PTS}_R(\Pi, U, X)
+    &= r_\Pi(U(X)) - r_\Pi(U(\ell_\Pi(R))) \\
+    &= r_\Pi(U(D) + U(\ell_\Pi(R))) - r_\Pi(U(\ell_\Pi(R))).
+\end{align}
+
+In the additive model, $r_\Pi$ is linear on $\mathcal{X}$ (since it extracts the
+remainder component of an additive decomposition). Therefore:
+\begin{align}
+  \mathrm{PTS}_R(\Pi, U, X)
+    &= r_\Pi(U(D)) + r_\Pi(U(\ell_\Pi(R))) - r_\Pi(U(\ell_\Pi(R))) \\
+    &= r_\Pi(U(D)) \\
+    &= r_\Pi(U(q_\Pi(X))).
+\end{align}
+This completes the proof.
+\end{proof}
+
+\subsection{Nakajima-Zwanzig Derivation Sketch}
+
+For completeness, we sketch the Nakajima-Zwanzig derivation in $\NA$ language.
+
+Let $\rho(t)$ be the full system-environment density matrix. Define projection:
+\begin{equation}
+  \proj \rho = \rho_S \otimes \rho_E^{\text{eq}}
+\end{equation}
+where $\rho_S = \mathrm{Tr}_E[\rho]$ and $\rho_E^{\text{eq}}$ is a reference
+environment state.
+
+The complement is $\mathcal{Q} = 1 - \proj$, projecting onto the ``irrelevant''
+(correlated) part.
+
+The Liouville-von Neumann equation:
+\begin{equation}
+  \frac{d\rho}{dt} = -i\mathcal{L}\rho = -i(\mathcal{L}_S + \mathcal{L}_E + \mathcal{L}_I)\rho
+\end{equation}
+
+Applying $\proj$ and $\mathcal{Q}$ separately and solving for the irrelevant part:
+\begin{equation}
+  \mathcal{Q}\rho(t) = e^{-i\mathcal{Q}\mathcal{L}t}\mathcal{Q}\rho(0)
+  - i\int_0^t e^{-i\mathcal{Q}\mathcal{L}(t-\tau)} \mathcal{Q}\mathcal{L}\proj\rho(\tau)\, d\tau
+\end{equation}
+
+Substituting back:
+\begin{equation}
+  \frac{d\proj\rho}{dt} = -i\proj\mathcal{L}\proj\rho
+  - \int_0^t K(t-\tau)\proj\rho(\tau)\, d\tau + I(t)
+\end{equation}
+
+where:
+\begin{align}
+  K(t) &= \proj\mathcal{L}\mathcal{Q} e^{-i\mathcal{Q}\mathcal{L}t} \mathcal{Q}\mathcal{L}\proj
+  \quad \text{(memory kernel)} \\
+  I(t) &= -i\proj\mathcal{L}\mathcal{Q} e^{-i\mathcal{Q}\mathcal{L}t} \mathcal{Q}\rho(0)
+  \quad \text{(inhomogeneity)}
+\end{align}
+
+In $\NA$ terms:
+\begin{itemize}
+  \item The first term $\proj\mathcal{L}\proj\rho$ is the ``naive'' projected dynamics
+  \item $K(t)$ encodes back-action from debt ($\mathcal{Q}\rho$)
+  \item $I(t)$ encodes initial debt (correlations at $t=0$)
+\end{itemize}
+
+\section{Experimental Details}
+\label{sec:appendix-experimental}
+
+\subsection{Signal Processing Experiment}
+
+\paragraph{Data Generation.}
+Synthetic signals are generated with:
+\begin{itemize}
+  \item Domain: $x \in [0, 1]$, 500 points
+  \item Background: $B = 1.0$
+  \item Foreground: Gaussian envelope (width $0.3$) with 3--6 sub-blobs,
+    amplitude 3--8 (varied per trial)
+  \item Instrument drift: Quadratic polynomial, random coefficients $\sim U(-0.5, 0.5)$
+  \item Noise: Gaussian, $\sigma = 0.05$
+  \item Edge mask: 15\% on each side
+\end{itemize}
+
+\paragraph{Baseline Fitting.}
+Polynomial fit to edge regions only, degrees 1, 2, 3, 6. Least-squares
+fit with optional Tikhonov regularization (penalty $\lambda$ on coefficient
+magnitudes, excluding constant term).
+
+\paragraph{Background Estimation.}
+After baseline subtraction, $\hat{B}$ is estimated as the mean of the
+residual in the central (non-edge) region.
+
+\paragraph{Reproducibility.}
+All random seeds are fixed. Running the script with identical parameters
+produces identical outputs (verified via SHA-256 hash of output arrays).
+
+\subsection{Spectral Experiment}
+
+\paragraph{Sign-Flip Test.}
+\begin{itemize}
+  \item Generate random SPD matrix $A = X X^T$ where $X \sim N(0, 1)$
+  \item Compute eigendecomposition with different LAPACK driver seeds
+  \item Compare eigenvectors (expect sign flips) and projectors (expect identity)
+\end{itemize}
+
+\paragraph{Degeneracy Test.}
+\begin{itemize}
+  \item Construct $A$ with eigenvalues $(1, 1+\epsilon, 2)$, $\epsilon = 10^{-4}$
+  \item Perturb by $\delta = 10^{-6}$ symmetric noise
+  \item Measure eigenvector angle change vs projector angle change
+\end{itemize}
+
+\paragraph{Procrustes Tracking.}
+\begin{itemize}
+  \item Generate time series of covariance matrices via random walk on SPD manifold
+  \item Track eigenvectors with raw export vs Procrustes alignment
+  \item Compute subspace distance between consecutive frames
+\end{itemize}
+
+\subsection{Jaynes-Cummings Experiment}
+
+\paragraph{Parameters.}
+\begin{itemize}
+  \item Coupling: $g = 1.0$ (units where $\hbar = 1$)
+  \item Initial photon number: $n \in \{0, 1, 2, 3\}$
+  \item Time range: $[0, 2\pi]$, 33 points
+  \item Output precision: 6 decimal places
+\end{itemize}
+
+\paragraph{Observables.}
+\begin{itemize}
+  \item $P_e^{\text{full}} = \cos^2(\Omega_n t)$
+  \item $P_e^{\text{naive}} = 1$
+  \item $P_e^{\text{corrected}} = 1 + \int_0^t (-\Omega_n \sin(2\Omega_n \tau))\, d\tau$
+  \item Purity: $\mathrm{Tr}[\rho_A^2] = \cos^4(\Omega_n t) + \sin^4(\Omega_n t)$
+  \item Entropy: $S(\rho_A) = -\lambda_+ \log_2 \lambda_+ - \lambda_- \log_2 \lambda_-$
+    where $\lambda_\pm = (1 \pm \sqrt{2\mathrm{Tr}[\rho_A^2]-1})/2$
+\end{itemize}
+
+\section{Determinism Contract}
+\label{sec:appendix-determinism}
+
+For NA0 to serve as a reproducibility foundation, debt must be deterministically
+serializable. We specify the following contract:
+
+\begin{definition}[NA0 Determinism Contract]
+  An NA0 implementation satisfies the \emph{determinism contract} if:
+  \begin{enumerate}
+    \item \textbf{Canonical encoding}: Debt $D$ and remainder $R$ admit a canonical
+      byte-level encoding (e.g., IEEE 754 floats in little-endian, sorted keys for
+      dictionaries, lexicographic ordering for sets).
+    \item \textbf{Hash stability}: $\mathrm{SHA256}(\mathrm{encode}(D, R, \Pi))$ is
+      identical across runs with identical inputs, regardless of execution order
+      or parallelism.
+    \item \textbf{Reconstruction idempotence}: $\mathrm{Rec}_\Pi(\mathrm{decode}(\mathrm{encode}(\NA\langle D, R; \Pi\rangle))) = \mathrm{Rec}_\Pi(\NA\langle D, R; \Pi\rangle)$.
+    \item \textbf{No hidden state}: The policy $\Pi$ must declare all parameters
+      affecting the projection (thresholds, hyperparameters, random seeds if any).
+  \end{enumerate}
+\end{definition}
+
+\paragraph{Implementation notes.}
+\begin{itemize}
+  \item Use fixed-precision float formatting (e.g., 6 decimal places) in human-readable exports
+  \item Use sorted dictionary keys in JSON/CSV exports
+  \item Pin random seeds and document them as policy parameters
+  \item Avoid unordered iteration (e.g., Python's pre-3.7 \texttt{dict}, \texttt{set})
+\end{itemize}
+
+\paragraph{Benchmark harness.}
+The accompanying \texttt{benchmark/} directory provides a harness that:
+\begin{itemize}
+  \item Runs spectral, signal, and quantum benchmarks
+  \item Outputs pass/fail status with metrics and thresholds
+  \item Computes SHA-256 hashes of outputs for verification
+  \item Verifies determinism by comparing hashes across runs
+\end{itemize}
+Execute with \texttt{make bench} or \texttt{python na0\_benchmark.py}.
+
+\section{Notation Reference}
+\label{sec:appendix-notation}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\NA\langle \debt, \remainder; \policy \rangle$ & NA0 object with debt, remainder, policy \\
+$\debt$ & Discarded information (debt) \\
+$\remainder$ & Retained value (remainder) \\
+$\policy$ & Projection policy \\
+$\proj_\policy$ & Projection operator under policy $\policy$ \\
+$\mathrm{Total}(\cdot)$ & Totalization: extract remainder, discard debt \\
+$\mathrm{PTS}(\proj, U, X)$ & Projection timing sensitivity \\
+$\remainder^{\langle\debt;\policy\rangle}$ & Debt-attached remainder notation \\
+$\zeta(s)$ & Riemann zeta function \\
+$\rho_S$ & Reduced density matrix of system \\
+$K(t)$ & Nakajima-Zwanzig memory kernel \\
+$P_i = v_i v_i^T$ & Eigenvector projector \\
+$d(P, P')$ & Subspace distance (Frobenius norm) \\
+\bottomrule
+\end{tabular}
+\end{center}

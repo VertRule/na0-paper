@@ -1,0 +1,241 @@
+\section{Quantum Dynamics: The Jaynes-Cummings Model}
+\label{sec:quantum}
+
+We demonstrate that the $\NA$ correction term in quantum reduced dynamics
+aligns with the Nakajima-Zwanzig memory-kernel structure under the stated
+projection and initial-state assumptions. The Jaynes-Cummings
+model provides an exactly solvable test case.
+
+\subsection{The Jaynes-Cummings Model}
+
+The Jaynes-Cummings (JC) Hamiltonian describes a two-level atom coupled to a
+single quantized field mode:
+\begin{equation}
+  H = \hbar\omega_a \sigma^+\sigma^- + \hbar\omega_f a^\dagger a + \hbar g(\sigma^+ a + \sigma^- a^\dagger)
+\end{equation}
+where $\sigma^\pm$ are atomic raising/lowering operators, $a^\dagger, a$ are
+photon creation/annihilation operators, and $g$ is the coupling strength.
+
+At resonance ($\omega_a = \omega_f$), starting from $|e, n\rangle$ (excited atom,
+$n$ photons), the exact evolution is:
+\begin{equation}
+  |\psi(t)\rangle = \cos(\Omega_n t)|e, n\rangle - i\sin(\Omega_n t)|g, n+1\rangle
+\end{equation}
+where $\Omega_n = g\sqrt{n+1}$ is the generalized Rabi frequency.
+
+\subsection{Projection: Tracing Out the Field}
+
+The reduced atomic density matrix is obtained by tracing over the field:
+\begin{equation}
+  \rho_A(t) = \mathrm{Tr}_F[|\psi(t)\rangle\langle\psi(t)|]
+\end{equation}
+
+The probability of finding the atom excited is:
+\begin{equation}
+  P_e^{\text{full}}(t) = \cos^2(\Omega_n t)
+\end{equation}
+
+This is Rabi oscillation: the atom periodically exchanges excitation with the field.
+
+\subsection{Naive Projected Dynamics}
+
+If we project first and then evolve, we trace out the field at $t=0$:
+\begin{equation}
+  \rho_A(0) = |e\rangle\langle e|
+\end{equation}
+The projected dynamics uses only the atomic Hamiltonian, which (after tracing
+out the field) has no remaining interaction. The naive prediction is:
+\begin{equation}
+  P_e^{\text{naive}}(t) = 1 \quad \text{(constant, incorrect)}
+\end{equation}
+
+The naive projected model completely misses the Rabi oscillations.
+
+\subsection{Projection Timing Sensitivity}
+
+This is a textbook example of PTS:
+\begin{equation}
+  \mathrm{PTS} = P_e^{\text{full}}(t) - P_e^{\text{naive}}(t) = \cos^2(\Omega_n t) - 1 = -\sin^2(\Omega_n t)
+\end{equation}
+
+The PTS reaches maximum magnitude $1$ at $t = \pi/(2\Omega_n)$, when the atom
+is maximally entangled with the field.
+
+\paragraph{Projection timing sensitivity in the quantum channel.}
+We compute a remainder-channel timing signal by comparing the outcomes of
+(i) projecting and then evolving versus (ii) evolving and then projecting.
+Even in a simple JC setting, the divergence is time-structured rather than
+a single scalar; this supports treating projection as a first-class operation
+whose timing can be audited.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/quantum/plot_02_pts_divergence.png}
+  \caption{Quantum PTS example. Timing divergence as a function of projection time,
+  illustrating $P \circ U \neq U \circ P$. An admissibility criterion
+  based on an entropy threshold produces time windows where totalization is
+  permitted vs refused (fail-closed).}
+  \label{fig:jc_pts_windows}
+\end{figure}
+
+\subsection{The NA0 Correction Term}
+
+The $\NA$ framework identifies the correction needed:
+\begin{equation}
+  \frac{d P_e}{dt} = -\Omega_n \sin(2\Omega_n t)
+\end{equation}
+
+This is the ``memory kernel'' contribution from the traced-out field. Integrating:
+\begin{equation}
+  P_e^{\text{corrected}}(t) = 1 + \int_0^t \frac{d P_e}{d\tau}\, d\tau = \cos^2(\Omega_n t) = P_e^{\text{full}}(t)
+\end{equation}
+
+The $\NA$ correction exactly recovers the full dynamics.
+
+\subsection{NA0 Representation}
+
+The partial trace projection produces:
+\begin{equation}
+  \proj_{\mathrm{Tr}_F}(|\psi\rangle\langle\psi|) =
+  \NA\left\langle \rho_{\text{corr}}(t), \rho_A(t); \mathrm{Tr}_F \right\rangle
+\end{equation}
+where $\rho_{\text{corr}}$ contains the system-field correlations that were
+traced out.
+
+The debt is:
+\begin{itemize}
+  \item The off-diagonal elements of the full density matrix in the product basis
+  \item Equivalently, the entanglement between atom and field
+  \item Quantified by the von Neumann entropy: $S(\rho_A) = -\mathrm{Tr}[\rho_A \log \rho_A]$
+\end{itemize}
+
+\subsection{Experimental Verification}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/quantum/jc_na0_dynamics.png}
+  \caption{Jaynes-Cummings NA0 dynamics.
+    \textbf{Top}: Excited state probability $P_e(t)$ for full model (blue),
+    naive projected model (red), and NA0-corrected model (green, overlaps blue).
+    \textbf{Middle}: Purity of reduced atomic state, showing periodic entanglement.
+    \textbf{Bottom}: NA0 correction rate, peaking when entanglement is maximum.}
+  \label{fig:jc-dynamics}
+\end{figure}
+
+\Cref{fig:jc-dynamics} shows numerical results from our JC simulation:
+\begin{itemize}
+  \item The full and corrected models agree exactly (to numerical precision)
+  \item The naive model has $100\%$ error at half-periods
+  \item The correction rate $|dP_e/dt|$ correlates with entanglement (purity minimum)
+\end{itemize}
+
+\paragraph{Open-system extension: dissipation (Lindblad).}
+Real cavities are not closed: photon loss and dephasing suppress coherent exchange.
+We include a minimal Lindblad decay model (cavity decay rate $\kappa$) and track the
+resulting reduction in visible Rabi oscillations as a function of $\kappa$.
+This is a direct stress-test of projection-honest bookkeeping: when coherence is
+lost, the reduced description must either (i) carry explicit debt describing the
+discarded correlations, or (ii) fail closed rather than silently totalize.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/quantum/plot_07_dissipation.png}
+  \caption{Dissipation in the Jaynes--Cummings model. Increasing cavity decay
+  $\kappa$ suppresses Rabi oscillations in $P_e(t)$. The transition from strong
+  to weak coupling is visible near $\kappa \approx g$, beyond which oscillations
+  become effectively unobservable.}
+  \label{fig:jc_dissipation}
+\end{figure}
+
+\subsection{Connection to Nakajima-Zwanzig}
+
+\paragraph{Assumptions (for this section).}
+We consider (i) a specified projection superoperator $P$ (e.g., $P\rho = \rho_S \otimes \rho_E^{eq}$),
+(ii) an initial product state (system uncorrelated with environment at $t=0$),
+and (iii) a chosen observable channel when we present scalar kernels (as distinct from the full superoperator kernel).
+Within these assumptions, the NA0 ``debt'' term captures the information discarded by naive projection and yields a correction term with the same structural role as the NZ memory contribution.
+
+The Nakajima-Zwanzig equation~\cite{nakajima1958,zwanzig1960} provides the
+exact reduced dynamics:
+\begin{equation}
+  \frac{d\rho_S}{dt} = \mathcal{L}_S \rho_S + \int_0^t K(t-\tau) \rho_S(\tau)\, d\tau + I(t)
+\end{equation}
+
+The terms are:
+\begin{itemize}
+  \item $\mathcal{L}_S$: Liouvillian from the projected Hamiltonian (naive dynamics)
+  \item $K(t)$: Memory kernel encoding back-action from the environment
+  \item $I(t)$: Inhomogeneity from initial correlations
+\end{itemize}
+
+In $\NA$ terms:
+\begin{itemize}
+  \item The naive dynamics uses only the first term (totalizing the debt)
+  \item The memory kernel is the derivative of accumulated debt
+  \item $\NA$-correct dynamics includes all terms
+\end{itemize}
+
+In the specific JC setup studied here (resonance, initial product state, $n=0$ Fock component
+where $\Omega_0 = g$), the NA0 correction on the $P_e$ observable channel plays the structural
+role of a memory kernel. From Eq.~(35), the correction rate is:
+\[
+  \mathrm{NA0}(t) = \frac{dP_e}{dt} = -g\sin(2gt).
+\]
+Integrating restores the full Rabi oscillation:
+\begin{equation}
+  P_e^{\text{full}}(t) = P_e^{\text{naive}} + \int_0^t \mathrm{NA0}(\tau)\, d\tau
+  = 1 + \left[\frac{\cos(2gt)}{2} - \frac{1}{2}\right] = \cos^2(gt).
+\end{equation}
+In the scalar observable channel we track, the NA0 correction plays the same structural role as
+the NZ correction term (restoring the reduced dynamics after naive projection), though the full
+NZ object is a superoperator-valued convolution kernel. To be explicit: we match the structural
+role and reproduce the observable, not derive $K(t)$ for the full reduced density matrix.
+
+\subsection{Scaling Behaviors}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/quantum/photon_scaling.png}
+  \caption{Photon number scaling. Higher initial photon number $n$ gives faster
+    Rabi oscillations ($\Omega_n = g\sqrt{n+1}$) and larger instantaneous NA0
+    correction rates.}
+  \label{fig:photon-scaling}
+\end{figure}
+
+The NA0 correction scales with system parameters:
+\begin{itemize}
+  \item \textbf{Coupling strength}: $|\mathrm{NA0}| \propto g$
+  \item \textbf{Photon number}: $|\mathrm{NA0}| \propto \sqrt{n+1}$
+  \item \textbf{Cumulative error}: $\int |P_e^{\text{naive}} - P_e^{\text{full}}| dt \propto t$
+\end{itemize}
+
+\Cref{fig:photon-scaling} shows this scaling. The naive model becomes increasingly
+wrong as either coupling strength or photon number increases.
+
+\subsection{Collapse and Revival}
+
+For coherent-state initial conditions $|\alpha\rangle$ with mean photon number
+$\bar{n} = |\alpha|^2$, the dynamics shows collapse and revival:
+\begin{itemize}
+  \item \textbf{Collapse} ($t \sim 1/g$): Dephasing of Fock components causes
+    $P_e \to 0.5$
+  \item \textbf{Revival} ($t \sim 2\pi\sqrt{\bar{n}}/g$): Partial rephasing
+    restores oscillations
+\end{itemize}
+
+During collapse, the naive model has persistent $\sim 50\%$ error. The $\NA$
+correction tracks this exactly.
+
+\subsection{Implications}
+
+The JC example demonstrates that:
+\begin{enumerate}
+  \item Projection creates debt (entanglement information)
+  \item Debt has back-action on the reduced dynamics (memory kernel)
+  \item Ignoring debt gives qualitatively wrong predictions (no Rabi oscillations)
+  \item $\NA$-aware dynamics recovers the exact answer
+\end{enumerate}
+
+This is not specific to JC. Any open quantum system exhibits similar behavior:
+tracing out environmental degrees of freedom creates debt that manifests as
+non-Markovian corrections to the reduced dynamics.

@@ -1,0 +1,176 @@
+\section{Spectral Analysis: Projection-Honest Eigenvectors}
+\label{sec:spectral}
+
+Eigendecomposition is a fundamental projection operation in data analysis
+(PCA, spectral clustering, etc.). We show that standard eigenvector export
+introduces artifacts that $\NA$-aware methods avoid.
+
+\subsection{The Eigenvector Export Problem}
+
+Given a symmetric matrix $A \in \mathbb{R}^{n \times n}$, the eigendecomposition
+is:
+\begin{equation}
+  A = V \Lambda V^T = \sum_{i=1}^n \lambda_i v_i v_i^T
+\end{equation}
+Standard practice exports the eigenvectors $\{v_i\}$ and eigenvalues $\{\lambda_i\}$.
+This creates several artifacts.
+
+\paragraph{Sign Ambiguity.} If $v$ is an eigenvector, so is $-v$. Different
+algorithms, initializations, or numerical precision can flip signs arbitrarily.
+Comparing eigenvectors across runs or methods produces ``false differences''
+that are artifacts, not signal.
+
+\paragraph{Degeneracy Rotation.} When eigenvalues are degenerate or
+near-degenerate ($\lambda_i \approx \lambda_j$), the corresponding eigenvectors
+span a subspace but are not individually determined. Any rotation within the
+subspace is equally valid. Small perturbations can cause large rotations.
+
+\paragraph{Ordering Artifacts.} Eigenvalue ordering conventions (descending,
+ascending, by absolute value) are arbitrary. Tracking eigenvectors across
+time or conditions requires matching, which can fail near crossings.
+
+\subsection{Projection-Honest Alternative: Projectors}
+
+The fundamental object in spectral analysis is not the eigenvector but the
+\emph{projector}:
+\begin{equation}
+  P_i = v_i v_i^T
+\end{equation}
+The projector is invariant under sign flips: $(-v)(-v)^T = v v^T$.
+
+For near-degenerate eigenvalues, we should export the \emph{cluster projector}:
+\begin{equation}
+  P_{\text{cluster}} = \sum_{i \in \text{cluster}} v_i v_i^T
+\end{equation}
+which projects onto the full eigenspace rather than choosing an arbitrary
+basis within it.
+
+\subsection{NA0 Representation}
+
+Standard eigenvector export is a projection with implicit debt:
+\begin{equation}
+  \proj_{\text{evec}}(A) = \NA\langle \text{sign choice}, \{(\lambda_i, v_i)\}; \text{eigenvector}\rangle
+\end{equation}
+
+Projector-based export makes the debt explicit:
+\begin{equation}
+  \proj_{\text{proj}}(A) = \NA\langle \text{basis choice within eigenspace}, \{(\lambda_i, P_i)\}; \text{projector}\rangle
+\end{equation}
+
+For clustered eigenvalues, the fail-closed policy refuses to export individual
+eigenvectors:
+\begin{equation}
+  \proj_{\text{fail-closed}}(A) =
+  \begin{cases}
+    \{(\lambda_i, v_i)\} & \text{if } |\lambda_i - \lambda_j| > \theta\ \forall i \neq j \\
+    \text{cluster projector} & \text{otherwise}
+  \end{cases}
+\end{equation}
+
+\subsection{Experiments}
+
+We demonstrate four spectral projection artifacts and their $\NA$ solutions.
+
+\subsubsection{Sign-Flip Artifact}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/spectral/sign_flip.png}
+  \caption{Sign-flip artifact in PCA. Running PCA on identical data with
+    different random seeds produces eigenvectors with flipped signs (left).
+    Exporting projectors $P = vv^T$ instead (right) yields identical results.}
+  \label{fig:sign-flip}
+\end{figure}
+
+\Cref{fig:sign-flip} shows PCA on identical data with different random seeds.
+Eigenvectors appear different (sign flips) while projectors are identical.
+Standard comparison metrics (correlation, angle) would report ``differences''
+that are pure artifacts.
+
+\subsubsection{Degeneracy Rotation}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/spectral/degeneracy_rotation.png}
+  \caption{Degeneracy-induced rotation. A matrix with near-degenerate eigenvalues
+    (gap $\epsilon = 10^{-4}$) is perturbed by $10^{-6}$. Eigenvectors rotate
+    dramatically (left); the span (cluster projector) is stable (right).}
+  \label{fig:degeneracy}
+\end{figure}
+
+\Cref{fig:degeneracy} demonstrates that tiny perturbations cause large eigenvector
+rotations when eigenvalues are close. The 2D eigenspace (cluster projector) is
+stable; only the basis within it changes.
+
+\subsubsection{Procrustes Tracking}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/spectral/procrustes_tracking.png}
+  \caption{Time series eigenvector tracking. Raw eigenvectors (top) show
+    discontinuities from sign flips and mode crossings. Procrustes alignment
+    (middle) produces smooth evolution. Subspace distance $d(P_t, P_{t+1})$
+    (bottom) provides a policy-independent stability metric.}
+  \label{fig:procrustes}
+\end{figure}
+
+For time series of covariance matrices, tracking eigenvectors requires a
+\emph{policy}: how to match eigenvectors across time points. \Cref{fig:procrustes}
+compares:
+\begin{itemize}
+  \item \textbf{Raw export}: Discontinuities from sign flips and mode crossings
+  \item \textbf{Procrustes alignment}: Find optimal rotation to match successive
+    eigenvector matrices
+  \item \textbf{Subspace distance}: $d(P, P') = \|P - P'\|_F$ is continuous and
+    policy-independent
+\end{itemize}
+
+\subsubsection{Fail-Closed Demo}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/spectral/fail_closed.png}
+  \caption{Fail-closed eigenvector export. When the eigenvalue gap is below
+    threshold, the system exports only the cluster projector (debt), not
+    individual eigenvectors. This prevents downstream consumers from using
+    unreliable basis vectors.}
+  \label{fig:fail-closed}
+\end{figure}
+
+\Cref{fig:fail-closed} shows the fail-closed policy in action. When eigenvalues
+are within tolerance $\theta$, the system:
+\begin{itemize}
+  \item Refuses to export individual eigenvectors
+  \item Exports the cluster projector with explicit debt metadata
+  \item Signals to downstream consumers that basis ambiguity exists
+\end{itemize}
+
+\subsection{Subspace-First Analysis}
+
+The experiments suggest a ``subspace-first'' approach to spectral analysis:
+
+\begin{enumerate}
+  \item Compute eigendecomposition
+  \item Cluster eigenvalues by gap (e.g., $|\lambda_i - \lambda_j| < \theta$)
+  \item Export cluster projectors, not individual eigenvectors
+  \item If individual vectors are needed, require explicit policy choice
+    with documented debt
+\end{enumerate}
+
+This approach preserves the meaningful information (subspace structure) while
+making explicit the arbitrary choices (basis within subspace).
+
+\subsection{Applications}
+
+\paragraph{Principal Component Analysis.} Export the projector onto the
+top-$k$ eigenspace rather than individual principal components. Comparison
+across datasets uses subspace angles (e.g., Grassmann distance) rather than
+vector correlations.
+
+\paragraph{Spectral Clustering.} The cluster structure depends on the eigenspace,
+not the specific eigenvector basis. Using projectors makes clustering results
+reproducible across implementations.
+
+\paragraph{Dynamical Systems.} In stability analysis, the stable/unstable/center
+subspaces are the meaningful objects. Tracking these subspaces over parameter
+changes avoids spurious discontinuities from eigenvector flips.

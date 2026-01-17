@@ -1,0 +1,176 @@
+\section{Discussion}
+\label{sec:discussion}
+
+We have introduced the $\NA$ (Non-Atomic Zero) framework and demonstrated its
+application across four domains. Here we discuss implications, limitations,
+and future directions.
+
+\subsection{Summary of Results}
+
+The $\NA$ framework provides a unified treatment of projection-induced artifacts:
+
+\paragraph{Divergent Series.} Regularization is a projection policy; the
+``value'' $-1/12$ of $\sum n$ is policy-dependent remainder with implicit
+divergent debt.
+
+\paragraph{Signal Processing.} Baseline subtraction policies induce systematic,
+correlated debt-remainder variations that can masquerade as physical disagreements.
+
+\paragraph{Spectral Analysis.} Eigenvector export carries sign and basis
+ambiguity as implicit debt; projector-based export makes this explicit.
+
+\paragraph{Quantum Dynamics.} The Nakajima-Zwanzig memory kernel is the
+$\NA$ correction term for traced-out environmental degrees of freedom.
+
+\subsection{Projection-Honest Computation}
+
+We propose \emph{projection-honest computation} as a design principle:
+\begin{quote}
+  Every projection operation should produce an $\NA$ object, making explicit
+  what was discarded and under what policy.
+\end{quote}
+
+This enables:
+\begin{itemize}
+  \item \textbf{Audit trails}: Track how debt accumulated through a computation
+  \item \textbf{Policy comparison}: Detect when results depend on projection choices
+  \item \textbf{Fail-closed safety}: Refuse to totalize when debt is too high
+  \item \textbf{Reproducibility}: Document policies alongside results
+\end{itemize}
+
+\subsection{Relation to Existing Work}
+
+The $\NA$ framework connects to several existing concepts:
+
+\paragraph{Information Theory.} The data processing inequality states that
+projections cannot increase information. $\NA$ makes the information loss
+(debt) explicit rather than implicit.
+
+\paragraph{Numerical Analysis.} Condition numbers quantify sensitivity to
+input perturbations. $\NA$ extends this to sensitivity to projection policy,
+a different axis of instability.
+
+\paragraph{Open Quantum Systems.} The Nakajima-Zwanzig formalism has been
+used for decades. $\NA$ generalizes its insight---that projection creates
+correctable debt---beyond quantum mechanics.
+
+\paragraph{Regularization Theory.} Hadamard finite parts and zeta-regularization
+are well-established. $\NA$ provides a common framework and notation.
+
+\subsection{Limitations}
+
+\paragraph{Debt Representation.} The $\NA$ framework requires choosing how to
+represent debt. For some projections (e.g., partial traces in infinite dimensions),
+the debt may be unwieldy or ill-defined. Practical applications require
+domain-specific debt formats.
+
+\paragraph{Composition Complexity.} As projections compose, debt accumulates.
+For long pipelines, debt management may become computationally expensive.
+Approximations or periodic debt truncation may be needed.
+
+\paragraph{Policy-Free Projection.} In some cases, there is no meaningful
+alternative policy---the projection is canonical. $\NA$ is most useful when
+multiple reasonable policies exist.
+
+\paragraph{Novelty Scope.} Much of what $\NA$ captures is ``known'' in specific
+domains (regularization, open systems, numerical conditioning). The contribution
+is unification and explicit representation, not new physics or mathematics.
+
+\paragraph{Driven systems and boundary cases.}
+NA0 as presented assumes a declared projection policy with a stable remainder/lift
+interface over the relevant time horizon. In strongly driven regimes (time-dependent
+Hamiltonians) and nonlinear measurement backaction scenarios, qualitative phenomena
+such as photon blockade can emerge in ways that are not captured by a fixed
+projection map without extending the policy to be time-indexed or augmenting the
+state with additional tracked variables. In these regimes, we recommend explicit
+fail-closed thresholds rather than silent totalization.
+
+\subsection{Future Work}
+
+\paragraph{Software Implementation.} A reference implementation of $\NA$ objects
+with debt tracking, composition, and fail-closed policies would enable adoption.
+Integration with numerical libraries (NumPy, SciPy) is a natural next step.
+
+\paragraph{Domain Applications.} The framework should be tested in specific
+high-stakes domains:
+\begin{itemize}
+  \item Cosmology: Does the Hubble tension have a projection-policy component?
+  \item Machine learning: Do hyperparameter choices function as projection policies?
+  \item Financial modeling: How does aggregation policy affect risk estimates?
+\end{itemize}
+
+\paragraph{Formal Verification.} Can we prove that a computation is
+projection-honest? Type systems or proof assistants might enforce debt tracking.
+
+\paragraph{Optimal Policy Selection.} Given a task, can we identify the
+``best'' projection policy? This requires formalizing what makes a policy good
+(minimum debt? Minimum variance? Maximum interpretability?).
+
+\subsection{Implications for Scientific Practice}
+
+The $\NA$ framework suggests practical changes to scientific workflow:
+
+\begin{enumerate}
+  \item \textbf{Report policies, not just results.} Papers should document
+    projection choices (baseline model, regularization scheme, eigenvector
+    convention) alongside numerical results.
+
+  \item \textbf{Test policy sensitivity.} Before claiming a result is robust,
+    vary projection policies and check for debt-remainder correlation.
+
+  \item \textbf{Distinguish tension types.} ``Tension'' between experiments
+    should be classified: statistical (noise), systematic (calibration),
+    physical (new phenomena), or projection-induced (policy disagreement).
+
+  \item \textbf{Use fail-closed defaults.} When debt is high or ambiguous,
+    refuse to report a scalar. Instead, report the debt structure explicitly.
+\end{enumerate}
+
+\subsection{Conclusion}
+
+Projection is ubiquitous, and the information it discards does not disappear.
+The $\NA$ framework makes this debt explicit, enabling detection and management
+of projection-induced artifacts. We hope this contributes to more reproducible
+and auditable scientific computation.
+
+\subsection{Reproducibility}
+
+All experiments in this paper are deterministically reproducible. The artifact bundle includes:
+
+\paragraph{Environment.} Python 3.9+, NumPy, SciPy, Matplotlib. Dependencies are pinned in \texttt{requirements.txt}. No external randomness is used; all ``random'' initialization uses fixed seeds.
+
+\paragraph{Execution.} Each experiment can be reproduced via:
+\begin{itemize}
+  \item \textbf{Signal processing}: \texttt{python projection\_experiment.py}
+  \item \textbf{Spectral analysis}: \texttt{python spectral\_na0.py}
+  \item \textbf{Quantum dynamics}: \texttt{python na0/jc-na0-demo/jc\_plots.py}
+\end{itemize}
+
+\paragraph{Determinism guarantees.}
+Output files use sorted column order in CSV exports, fixed-precision float formatting (6 decimal places), and stable dictionary iteration (Python 3.7+ insertion order). Figure generation uses fixed random seeds where applicable.
+
+\paragraph{Verification.}
+The benchmark harness (\texttt{make bench} or \texttt{python na0\_benchmark.py}) runs
+four reproducibility tests with pass/fail status and SHA-256 output hashes:
+
+\begin{center}
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Benchmark} & \textbf{Test} & \textbf{Threshold} & \textbf{Determinism} \\
+\midrule
+\texttt{spectral} & Projector vs eigenvector variance ratio & $< 0.1$ & \checkmark \\
+\texttt{signal} & Debt-variance correlation & $> 0.7$ & \checkmark \\
+\texttt{quantum} & PTS max timing accuracy & $< 5\%$ & \checkmark \\
+\texttt{determinism} & Cross-run hash equality & exact & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All benchmarks produce identical SHA-256 hashes across runs with identical inputs.
+The complete artifact bundle, including source code, benchmark harness, and generated figures, will be released with a stable URL.
+
+\paragraph{Collaboration.}
+The author welcomes collaboration on projection-honest computation, numerical
+stability, and related invariant-driven programs; correspondence is invited at
+\texttt{Dave@vertrule.com}.

@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "Cite this repository by release tag + commit SHA until arXiv ID exists."
+type: software
+title: "Non-Atomic Zero: A Unified Theory of Projection-Honest Computation"
+version: 0.1.0-preprint
+date-released: 2026-01-16
+license: CC-BY-4.0
+authors:
+  - family-names: Ingle
+    given-names: David
+    email: Dave@vertrule.com
+    affiliation: VertRule Inc.
+repository-code: https://github.com/vertrule/na0-paper

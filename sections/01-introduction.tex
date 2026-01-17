@@ -1,0 +1,110 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Projection is ubiquitous in scientific computation. Whenever we reduce a
+high-dimensional object to a summary statistic, fit a model to data, trace out
+environmental degrees of freedom, or regularize a divergent series, we perform a
+projection---discarding some information to obtain a tractable result. Standard
+practice treats such operations as atomic: the projection produces a scalar or
+low-dimensional object, and the discarded information vanishes.
+
+This paper argues that treating projection as atomic is computationally
+hazardous. The discarded information does not vanish; it becomes implicit debt
+that can resurface as apparent disagreements between methods, spurious
+``tensions'' between experiments, or artifacts mistaken for physical effects.
+
+We introduce \emph{Non-Atomic Zero} ($\NA$), a framework that makes projection
+debt explicit. An $\NA$ object has the form:
+\begin{equation}
+  \NA\langle \debt, \remainder; \policy \rangle
+\end{equation}
+where $\debt$ is the discarded information (debt), $\remainder$ is the retained
+value (remainder), and $\policy$ is the projection rule (policy). The zero in
+``Non-Atomic Zero'' reflects the fact that these objects generalize the notion of
+``collapsing to zero''---the standard treatment makes the debt contribution zero
+by fiat, while $\NA$ preserves it.
+
+\subsection{Projection as a Source of Artifacts}
+
+Three examples motivate the framework:
+
+\paragraph{Divergent Series.} The statement $1 + 2 + 3 + \cdots = -1/12$ is
+notorious for provoking confusion. The series diverges; how can it equal a
+negative fraction? The answer is that this is not a statement about convergence
+but about \emph{regularization}---a specific projection policy (zeta-function
+regularization or Ramanujan summation) that extracts a finite part from a
+divergent object. Different regularization schemes can yield different values.
+The $\NA$ framework makes explicit what is discarded: the divergent part becomes
+debt, the finite part becomes remainder, and the regularization scheme is the
+policy.
+
+\paragraph{Background Subtraction.} In astronomy and spectroscopy, estimating a
+signal often requires subtracting a model of the background. Different baseline
+models (linear, polynomial, spline) fitted to the same ``source-free'' regions
+can yield significantly different signal estimates. The
+disagreement is not statistical noise but projection policy disagreement: each
+model class extrapolates differently from the fitting regions to the signal
+regions. $\NA$ represents this as debt (the model's extrapolation uncertainty)
+correlated with remainder (the estimated signal).
+
+\paragraph{Quantum Reduced Dynamics.} The Nakajima-Zwanzig
+equation~\cite{nakajima1958,zwanzig1960} provides the exact reduced dynamics of
+a quantum system coupled to an environment:
+\begin{equation}
+  \frac{d\rho_S}{dt} = \mathcal{L}_S \rho_S + \int_0^t K(t-\tau) \rho_S(\tau)\, d\tau + I(t)
+\end{equation}
+The memory kernel $K(t)$ and inhomogeneity $I(t)$ are precisely the correction
+terms required because the naive projected dynamics (first term alone) discards
+system-environment correlations. In $\NA$ terms, tracing out the environment
+creates debt; the memory kernel is the back-action of that debt on the reduced
+system.
+
+\subsection{Contributions}
+
+This paper makes five contributions:
+
+\begin{enumerate}
+  \item \textbf{Formalization}: We define the $\NA$ algebra, including
+    composition rules and the ``projection timing sensitivity'' (PTS) diagnostic
+    that detects non-commutative projection effects.
+
+  \item \textbf{Divergence Application}: We show how $\NA$ clarifies famous
+    regularized sums, making the debt-remainder decomposition explicit.
+
+  \item \textbf{Signal Processing Experiments}: We demonstrate experimentally
+    that policy variations induce correlated debt-remainder changes, and that
+    these correlations are detectable.
+
+  \item \textbf{Spectral Analysis}: We introduce projection-honest spectral
+    methods that export projectors rather than eigenvectors, avoiding sign-flip
+    and degeneracy artifacts.
+
+  \item \textbf{Quantum Dynamics}: We show that, in the Jaynes-Cummings setting
+    studied here, the $\NA$ correction term aligns with the Nakajima--Zwanzig
+    memory contribution and can be expressed in the same structural form.
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+\Cref{sec:na0-algebra} formalizes the $\NA$ framework.
+\Cref{sec:divergence} applies it to divergent series.
+\Cref{sec:signal} presents the signal processing experiments.
+\Cref{sec:spectral} develops projection-honest spectral methods.
+\Cref{sec:quantum} demonstrates the quantum dynamics application.
+\Cref{sec:discussion} discusses implications and future work.
+
+\subsection{Related Work}
+
+The $\NA$ framework connects to several established research areas:
+
+\paragraph{Divergent Series and Regularization.}
+Hardy's foundational treatment of divergent series~\cite{hardy1949} and Ramanujan's summation methods~\cite{ramanujan1927} establish the classical theory. The Hadamard finite part~\cite{hadamard1923} and distributional approaches~\cite{gelfand1964} provide rigorous frameworks for extracting finite values. The Casimir effect~\cite{casimir1948} demonstrates physical relevance. $\NA$ provides a common notation for these techniques, making the policy-dependence of ``values'' explicit.
+
+\paragraph{Baseline Subtraction and Model Selection.}
+Baseline estimation in spectroscopy~\cite{lieber2003,eilers2010} and signal processing~\cite{titterington1985} involves model-class choices that are often treated as preprocessing. The $\NA$ framework treats these as projection policies whose effects propagate into downstream results.
+
+\paragraph{Spectral Analysis and Subspace Stability.}
+The Davis-Kahan theorem~\cite{daviskahan1970} bounds eigenvector perturbation but does not resolve sign/basis ambiguity. Subspace angles and distances~\cite{ye2016,stewart1990} provide basis-independent metrics. PCA and spectral clustering~\cite{jolliffe2016,golub1973} inherit these ambiguities. $\NA$-aware methods export projectors rather than eigenvectors, avoiding artifacts.
+
+\paragraph{Open Quantum Systems.}
+The Nakajima-Zwanzig projection operator technique~\cite{nakajima1958,zwanzig1960} and related methods (Lindblad~\cite{lindblad1976,gorini1976}, time-convolutionless~\cite{shibata1977}) provide exact or approximate reduced dynamics. Recent work~\cite{breuer2009,chruściński2022,breuer2002} characterizes non-Markovianity. The Jaynes-Cummings model~\cite{jaynes1963} serves as a standard test case. $\NA$ generalizes the insight that projection creates correctable debt beyond the quantum setting.
