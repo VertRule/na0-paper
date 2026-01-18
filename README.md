@@ -2,6 +2,8 @@
 
 **Status: pre-submission draft**
 
+📄 **[Read the paper (PDF)](na0-paper.pdf)**
+
 ## Build
 
 Requires a LaTeX distribution with `latexmk`. Tested with TeX Live 2024+.
