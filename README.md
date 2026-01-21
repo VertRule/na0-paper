@@ -2,7 +2,17 @@
 
 **Status: pre-submission draft**
 
-📄 **[Read the paper (PDF)](na0-paper.pdf)**
+**[Read the paper (PDF)](na0-paper.pdf)**
+
+## Verify
+
+```bash
+git clone https://github.com/VertRule/na0-paper
+cd na0-paper
+VR_STRICT=1 ./VERIFY.sh
+```
+
+Expected output: `=== VERIFICATION PASSED (8/8) ===`
 
 ## Build
 
@@ -29,6 +39,23 @@ See `CITATION.cff` for structured citation metadata.
 ## Issues
 
 Report issues via GitHub Issues or email: Dave@vertrule.com
+
+## Non-Claims
+
+This paper and repository do **NOT** claim:
+
+- **Not a proof of RH** — NA0 is a bookkeeping formalism, not a proof technique
+- **Not a solution to any open problem** — we introduce notation, not theorems
+- **Not a complete framework** — this is an initial presentation of the concept
+- **Not peer reviewed** — preprint status, external review pending
+
+NA0 is a formalism for tracking "projection debt" — information discarded by totalization operations. It makes no claims about resolving that debt.
+
+## Artifact Map
+
+- **Rung index:** [RUNG_INDEX.md](RUNG_INDEX.md) — R04 through R10
+- **Status ledger:** [STATUS.md](STATUS.md) — paid/unpaid obligations
+- **Proof artifacts:** `proof_artifacts/` — rung-specific verification data
 
 ## License
 
