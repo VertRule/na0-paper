@@ -19,3 +19,6 @@
 
 # Local overrides
 .latexmkrc
+
+# Operator private (tokens, keys, etc.)
+operator_private/
